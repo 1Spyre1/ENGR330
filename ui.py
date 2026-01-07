@@ -1,82 +1,96 @@
 import streamlit as st
 import time
-from _pages import dashboard, raw_data
 
-# ---------------- PAGE CONFIG ----------------
-st.set_page_config(
-    page_title="BLE Sensor Dashboard",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+from _pages import dashboard, raw_data, charts
 
-# ---------------- GLOBAL CSS ----------------
+# Sayfa ayarları
+st.set_page_config(layout="wide")
+
 st.markdown(
     """
     <style>
-        /* üst padding azalt */
+        /* Ana container üst padding azalt */
         .block-container {
             padding-top: 1rem;
         }
 
+        /* Dashboard başlığı yukarı al */
         h2 {
-            margin-top: 0rem !important;
+            margin-top: 0.5rem !important;
             margin-bottom: 0.5rem !important;
         }
 
+        /* Divider boşluğunu azalt */
         hr {
             margin-top: 0.5rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.8rem;
         }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# ---------------- PAGES ----------------
+# Sidebar tamamen gizle
+st.markdown(
+    """
+    <style>
+        section[data-testid="stSidebar"] {
+            display: none;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Sayfa listesi
 PAGES = [
     ("Dashboard", dashboard.render),
     ("Raw Data", raw_data.render),
+    ("Charts", charts.render),
 ]
 
+# Session state
 if "page_index" not in st.session_state:
     st.session_state.page_index = 0
 
-# ---------------- NAVIGATION ----------------
-st.markdown("<div style='height: 25px;'></div>", unsafe_allow_html=True)
+# Navigation
+st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 
-left, center, right = st.columns([2, 6, 2])
+# Sayfa ismini al
+page_name, page_func = PAGES[st.session_state.page_index]
 
-with left:
-    if st.button("⬅️ Previous"):
-        st.session_state.page_index = max(0, st.session_state.page_index - 1)
-        st.rerun()
+# Butonları ve başlığı aynı satıra al
+col_left, col_center, col_right = st.columns([1, 8, 1])
 
-with center:
+with col_left:
+    if st.button("⬅️ Previous", use_container_width=True):
+        if st.session_state.page_index > 0:
+            st.session_state.page_index -= 1
+            st.rerun()
+
+with col_center:
     st.markdown(
-        f"<h2 style='text-align:center;'>{PAGES[st.session_state.page_index][0]}</h2>",
+        f"<h2 style='text-align:center; margin-top:0px; margin-bottom:0px;'>{page_name}</h2>",
         unsafe_allow_html=True
     )
 
-with right:
-    if st.button("Next ➡️"):
-        st.session_state.page_index = min(len(PAGES) - 1, st.session_state.page_index + 1)
-        st.rerun()
+with col_right:
+    if st.button("Next ➡️", use_container_width=True):
+        if st.session_state.page_index < len(PAGES) - 1:
+            st.session_state.page_index += 1
+            st.rerun()
 
-st.markdown("<hr/>", unsafe_allow_html=True)
+st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+st.divider()
 
-# ---------------- 🔥 SINGLE PLACEHOLDER ----------------
-page_placeholder = st.empty()
+# ---- 🔥 SADECE SEÇİLİ SAYFAYI RENDER ET ----
+PAGES[st.session_state.page_index][1]()
 
-with page_placeholder.container():
-    # SADECE SEÇİLİ SAYFA ÇİZİLİR
-    PAGES[st.session_state.page_index][1]()
-
-# ---------------- AUTO REFRESH (SAFE) ----------------
+# ---- AUTO REFRESH ----
 REFRESH_INTERVAL = 1  # saniye
 
 time.sleep(REFRESH_INTERVAL)
 st.rerun()
-
 
 
 
